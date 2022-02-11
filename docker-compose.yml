@@ -1,0 +1,86 @@
+version: '3.3'
+services:
+
+  client_pg_v15:
+    container_name: client_pg_v15
+    image: postgres:10.0
+    restart: 'always'
+    ports:
+      - 5555:5432
+    volumes:
+      - ./volumes/db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=login_to_change_v15
+      - POSTGRES_PASSWORD=password_to_change_admindb_v15
+    networks:
+      - webproxy
+
+  client_prod_odoo_v15:
+    container_name: client_prod_odoo_v15
+    image: elicocorp/odoo:15.0
+    restart: 'always'
+    command: start
+    ports:
+      - 8069:8069
+    #expose:
+    #  - 8069
+    links:
+      - client_pg_v15:db
+    volumes:
+      - './client_prod_v15/volumes/odoo_data/filestore:/opt/odoo/data/filestore'
+      - './client_prod_v15/volumes/odoo_data/sessions:/opt/odoo/data/sessions'
+      - './client_prod_v15/volumes/odoo_data/additional_addons:/opt/odoo/additional_addons'
+      - './client_prod_v15/volumes/odoo_data/odoo:/opt/odoo/sources/odoo'
+      - './client_prod_v15/volumes/odoo_data/specific_addons:/opt/odoo/specific_addons'
+      - './client_prod_v15/volumes/odoo_data/backups:/opt/odoo/backups'
+      #- './client_prod_v15/volumes/odoo.conf:/opt/odoo/etc/odoo.conf'
+      #- './client_prod_v15/volumes/startup.sh:/opt/scripts/startup.sh'
+    environment:
+      #- TARGET_UID=1000
+      - ODOO_ADMIN_PASSWD=password_to_change_admin_v15
+      - ODOO_DB_USER=login_to_change_v15
+      - ODOO_DB_PASSWORD=password_to_change_admindb_v15
+      #- HTTPS_METHOD=nohttps
+      - VIRTUAL_PORT=8069
+      - VIRTUAL_HOST=url_prod_client.com
+      - LETSENCRYPT_HOST=url_prod_client.com
+      - LETSENCRYPT_EMAIL=contact@client.com
+    networks:
+      - webproxy
+
+  client_test_odoo_v15:
+    container_name: client_test_odoo_v15
+    image: elicocorp/odoo:15.0
+    restart: 'always'
+    command: start
+    ports:
+      - 8072:8069
+    #expose:
+    #  - 8072
+    links:
+      - client_pg_v15:db
+    volumes:
+      - './client_prod_v15/volumes/odoo_data/filestore:/opt/odoo/data/filestore'
+      - './client_test_v15/volumes/odoo_data/sessions:/opt/odoo/data/sessions'
+      - './client_test_v15/volumes/odoo_data/additional_addons:/opt/odoo/additional_addons'
+      - './client_test_v15/volumes/odoo_data/odoo:/opt/odoo/sources/odoo'
+      - './client_test_v15/volumes/odoo_data/specific_addons:/opt/odoo/specific_addons'
+      #- './client_test_v15/volumes/odoo.conf:/opt/odoo/etc/odoo.conf'
+      #- './client_prod_v15/volumes/startup.sh:/opt/scripts/startup.sh'
+    environment:
+      #- TARGET_UID=1000
+      - ODOO_ADMIN_PASSWD=password_to_change_admin_v15
+      - ODOO_DB_USER=login_to_change_v15
+      - ODOO_DB_PASSWORD=password_to_change_admindb_v15
+      #- HTTPS_METHOD=nohttps
+      - VIRTUAL_PORT=8069
+      - VIRTUAL_HOST=url_test_client.com
+      - LETSENCRYPT_HOST=url_test_client.com
+      - LETSENCRYPT_EMAIL=contact@client.com
+    networks:
+      - webproxy
+
+networks:
+  webproxy:
+    external:
+      name: webproxy
